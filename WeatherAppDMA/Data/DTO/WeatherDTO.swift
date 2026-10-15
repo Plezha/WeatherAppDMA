@@ -1,40 +1,41 @@
 import Foundation
 
-struct WeatherFileDTO: Sendable {
+nonisolated struct WeatherFileDTO: Sendable {
     let cities: [WeatherDTO]
 }
 
-struct CityDTO: Sendable, Equatable {
+nonisolated struct CityDTO: Sendable, Equatable {
     let name: String
     let currentTemperatureC: Double
     let condition: String
     let description: String
 }
 
-struct WeatherDTO: Sendable {
+nonisolated struct WeatherDTO: Sendable {
     let city: String
     let timezone: String
     let current: CurrentWeatherDTO
     let hourly: [HourlyDTO]
     let daily: [DailyDTO]
+    var dailySummaryNote: String? = nil
 }
 
-struct CurrentWeatherDTO: Sendable {
+nonisolated struct CurrentWeatherDTO: Sendable {
     let temperatureC: Double
-    let feelsLikeC: Double
+    let feelsLikeC: Double?
     let humidity: Int
     let windMS: Double
     let condition: String
     let description: String
 }
 
-struct HourlyDTO: Sendable {
+nonisolated struct HourlyDTO: Sendable {
     let time: Date
     let temperatureC: Double
     let condition: String
 }
 
-struct DailyDTO: Sendable {
+nonisolated struct DailyDTO: Sendable {
     let date: Date
     let minC: Double
     let maxC: Double

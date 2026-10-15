@@ -4,22 +4,18 @@ import Testing
 
 struct RemoteWeatherDataSourceTests {
     @Test
-    func forecast_buildsRequestAndMapsWeather() async throws {
+    func forecast_buildsIdentifiedCacheableRequestAndMapsWeather() async throws {
         let client = StubHTTPClient { request in
             let url = try #require(request.url)
             #expect(url.scheme == "https")
-            #expect(url.host == "api.open-meteo.com")
-            #expect(url.path == "/v1/forecast")
+            #expect(request.httpMethod == "GET")
+            #expect(url.host == "api.met.no")
+            #expect(url.path == "/weatherapi/locationforecast/2.0/complete")
             let query = URLComponents(url: url, resolvingAgainstBaseURL: false)!.queryItems!
             let values = Dictionary(uniqueKeysWithValues: query.map { ($0.name, $0.value!) })
-            #expect(values["latitude"] == "55.7522")
-            #expect(values["longitude"] == "37.6156")
-            #expect(values["wind_speed_unit"] == "ms")
-            #expect(values["temperature_unit"] == "celsius")
-            #expect(values["timeformat"] == "unixtime")
-            #expect(values["timezone"] == "auto")
-            #expect(values["forecast_days"] == "7")
-            #expect(values["forecast_hours"] == "24")
+            #expect(values == ["lat": "55.7522", "lon": "37.6156"])
+            #expect(request.value(forHTTPHeaderField: "User-Agent") == "WeatherAppDMA/1.0 (https://github.com/v1lezz/WeatherAppDMA)")
+            #expect(request.cachePolicy == .useProtocolCachePolicy)
             #expect(request.timeoutInterval == 20)
             return Self.response(Self.forecast, request: request)
         }
@@ -28,33 +24,54 @@ struct RemoteWeatherDataSourceTests {
         #expect(weather.timezone == "Europe/Moscow")
         #expect(weather.current.temperatureC == 12.5)
         #expect(weather.current.feelsLikeC == 10.0)
-        #expect(weather.current.humidity == 65)
+        #expect(weather.current.humidity == 66)
         #expect(weather.current.windMS == 3.2)
         #expect(weather.current.condition == "rain")
-        #expect(weather.hourly.count == 2)
-        #expect(weather.hourly[0].time == Date(timeIntervalSince1970: 1_760_400_000))
+        #expect(weather.hourly.count == 3)
+        #expect(weather.hourly[0].time == ISO8601DateFormatter().date(from: "2099-10-15T20:00:00Z"))
         #expect(weather.hourly[1].condition == "snow")
-        #expect(weather.daily[0].minC == 4)
-        #expect(weather.daily[0].maxC == 14)
+        #expect(weather.daily[1].minC == 4)
+        #expect(weather.daily[1].maxC == 11)
     }
 
     @Test
-    func cities_usesOneBatchRequestAndPreservesCatalogueOrder() async throws {
+    func cities_limitsConcurrencyAndPreservesCatalogueOrder() async throws {
+        let recorder = RequestRecorder()
         let client = StubHTTPClient { request in
-            let query = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!.queryItems!
-            #expect(query.first { $0.name == "latitude" }?.value?.split(separator: ",").count == 12)
-            #expect(!query.contains { $0.name == "hourly" || $0.name == "daily" })
-            let rows = (0..<12).map { index in
-                Self.currentOnly.replacingOccurrences(of: "12.5", with: String(index))
-            }
-            return Self.response("[" + rows.joined(separator: ",") + "]", request: request)
+            await recorder.begin(request)
+            await Task.yield()
+            await recorder.end()
+            return Self.response(Self.forecast, request: request)
         }
         let cities = try await RemoteWeatherDataSource(client: client).loadCities()
         #expect(cities.count == 12)
         #expect(cities[0].name == "Санкт-Петербург")
         #expect(cities[1].name == "Москва")
         #expect(cities[11].name == "Иркутск")
-        #expect(cities.map(\.currentTemperatureC) == (0..<12).map(Double.init))
+        #expect(await recorder.requests.count == 12)
+        #expect(await recorder.maxActive <= 3)
+    }
+
+    @Test
+    func forecast_excludesPastAndGroupsDaysInCityTimezone() throws {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let forecast = try decoder.decode(METNorwayForecast.self, from: Data(Self.forecast.utf8))
+        let now = try #require(ISO8601DateFormatter().date(from: "2099-10-15T21:30:00Z"))
+        let weather = try forecast.weather(city: "Москва", timezone: "Europe/Moscow", now: now)
+        #expect(weather.current.temperatureC == 11)
+        #expect(weather.current.feelsLikeC == nil)
+        #expect(weather.hourly.count == 2)
+        #expect(weather.daily.count == 1)
+        #expect(weather.daily[0].date == ISO8601DateFormatter().date(from: "2099-10-15T21:00:00Z"))
+        #expect(weather.dailySummaryNote != nil)
+    }
+
+    @Test
+    func localMock_remainsDecodable() async throws {
+        let weather = try await LocalWeatherDataSource(loader: BundleJSONLoader()).loadWeather(for: "Москва")
+        #expect(weather.current.feelsLikeC != nil)
+        #expect(weather.dailySummaryNote == nil)
     }
 
     @Test(arguments: ["", "  ", "Атлантида"])
@@ -70,7 +87,7 @@ struct RemoteWeatherDataSourceTests {
         }
     }
 
-    @Test(arguments: [429, 500])
+    @Test(arguments: [403, 429, 500])
     func nonSuccessHTTPStatus_isReportedBeforeDecoding(status: Int) async {
         let client = StubHTTPClient { request in
             Self.response("not JSON", status: status, request: request)
@@ -80,8 +97,8 @@ struct RemoteWeatherDataSourceTests {
         }
     }
 
-    @Test(arguments: ["not JSON", currentOnly, forecast.replacingOccurrences(of: "[12.5, 11]", with: "[12.5]")])
-    func malformedOrIncompleteForecast_isRejected(json: String) async {
+    @Test(arguments: ["not JSON", emptyForecast, forecast.replacingOccurrences(of: "2099-10-15T20:00:00Z", with: "invalid")])
+    func malformedOrEmptyForecast_isRejected(json: String) async {
         let client = StubHTTPClient { request in Self.response(json, request: request) }
         await #expect(throws: AppError.invalidResponse) {
             try await RemoteWeatherDataSource(client: client).loadWeather(for: "Москва")
@@ -89,8 +106,8 @@ struct RemoteWeatherDataSourceTests {
     }
 
     @Test
-    func incompleteCityBatch_isRejected() async {
-        let client = StubHTTPClient { request in Self.response("[]", request: request) }
+    func emptyCityForecast_isRejected() async {
+        let client = StubHTTPClient { request in Self.response(Self.emptyForecast, request: request) }
         await #expect(throws: AppError.invalidResponse) {
             try await RemoteWeatherDataSource(client: client).loadCities()
         }
@@ -123,33 +140,38 @@ struct RemoteWeatherDataSourceTests {
     }
 
     @Test
-    func weatherCodes_mapToKnownConditions() {
-        let mapping: [Int: WeatherCondition] = [
-            0: .clear, 2: .partlyCloudy, 3: .cloudy, 45: .fog, 51: .rain,
-            71: .snow, 95: .thunderstorm, 97: .thunderstorm, 999: .unknown
+    func weatherSymbols_mapToKnownConditions() {
+        let mapping: [String: WeatherCondition] = [
+            "clearsky_day": .clear, "fair_night": .clear, "partlycloudy_polartwilight": .partlyCloudy,
+            "cloudy": .cloudy, "fog": .fog, "lightrainshowers_day": .rain,
+            "heavysnow": .snow, "sleetshowers_night": .snow, "rainandthunder": .thunderstorm,
+            "snowshowersandthunder_day": .thunderstorm, "new-symbol": .unknown
         ]
-        for (code, expected) in mapping {
-            #expect(OpenMeteoForecast.condition(for: code) == expected)
+        for (symbol, expected) in mapping {
+            #expect(METNorwayForecast.condition(for: symbol) == expected)
         }
+        #expect(METNorwayForecast.condition(for: nil) == .unknown)
     }
 
     nonisolated private static func response(_ json: String, status: Int = 200, request: URLRequest) -> (Data, URLResponse) {
         (Data(json.utf8), HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: nil)!)
     }
 
-    nonisolated private static let currentOnly = """
-    {"timezone":"Europe/Moscow","current":{
-      "temperature_2m":12.5,"apparent_temperature":10.0,"relative_humidity_2m":65,
-      "wind_speed_10m":3.2,"weather_code":61}}
-    """
+    nonisolated private static let emptyForecast = #"{"properties":{"timeseries":[]}}"#
 
     nonisolated private static let forecast = """
-    {"timezone":"Europe/Moscow","current":{
-      "temperature_2m":12.5,"apparent_temperature":10.0,"relative_humidity_2m":65,
-      "wind_speed_10m":3.2,"weather_code":61},
-     "hourly":{"time":[1760400000,1760403600],"temperature_2m":[12.5, 11],"weather_code":[61,71]},
-     "daily":{"time":[1760389200],"temperature_2m_min":[4],"temperature_2m_max":[14],"weather_code":[3]}}
+    {"properties":{"timeseries":[
+      {"time":"2099-10-15T20:00:00Z","data":{
+        "instant":{"details":{"air_temperature":12.5,"apparent_air_temperature":10,"relative_humidity":65.7,"wind_speed":3.2}},
+        "next_1_hours":{"summary":{"symbol_code":"rain"}}}},
+      {"time":"2099-10-15T21:00:00Z","data":{
+        "instant":{"details":{"air_temperature":11,"relative_humidity":65,"wind_speed":3.2}},
+        "next_6_hours":{"summary":{"symbol_code":"snow"}}}},
+      {"time":"2099-10-15T22:00:00Z","data":{
+        "instant":{"details":{"air_temperature":4,"relative_humidity":65,"wind_speed":3.2}}}}
+    ]}}
     """
+
 }
 
 private struct StubHTTPClient: HTTPClient {
@@ -158,4 +180,18 @@ private struct StubHTTPClient: HTTPClient {
     func data(for request: URLRequest) async throws -> (Data, URLResponse) {
         try await handler(request)
     }
+}
+
+private actor RequestRecorder {
+    private(set) var requests: [URLRequest] = []
+    private var active = 0
+    private(set) var maxActive = 0
+
+    func begin(_ request: URLRequest) {
+        requests.append(request)
+        active += 1
+        maxActive = max(maxActive, active)
+    }
+
+    func end() { active -= 1 }
 }

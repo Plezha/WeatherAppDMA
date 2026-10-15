@@ -27,11 +27,11 @@ enum AppError: LocalizedError, Equatable {
         case .notImplemented:
             return "Этот источник данных ещё не реализован."
         case .networkUnavailable:
-            return "Не удалось подключиться к сервису погоды. Проверьте интернет и попробуйте снова."
+            return "Не удалось подключиться к серверу. Проверьте интернет и попробуйте снова."
         case .httpStatus(let status):
-            return "Сервис погоды вернул ошибку \(status). Попробуйте позже."
+            return "Сервер вернул ошибку \(status). Попробуйте позже."
         case .invalidResponse:
-            return "Сервис погоды вернул некорректные данные. Попробуйте позже."
+            return "Сервер вернул некорректные данные. Попробуйте позже."
         case .favoriteAlreadyExists(let city):
             return "«\(city)» уже в избранном."
         case .favoriteNotFound:

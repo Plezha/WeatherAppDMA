@@ -7,11 +7,13 @@ struct MetricsRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            metric(
-                icon: "thermometer.medium",
-                title: "Ощущается",
-                value: UnitFormatter.temperature(celsius: current.feelsLikeC, unit: temperatureUnit)
-            )
+            if let feelsLike = current.feelsLikeC {
+                metric(
+                    icon: "thermometer.medium",
+                    title: "Ощущается",
+                    value: UnitFormatter.temperature(celsius: feelsLike, unit: temperatureUnit)
+                )
+            }
             metric(
                 icon: "humidity.fill",
                 title: "Влажность",

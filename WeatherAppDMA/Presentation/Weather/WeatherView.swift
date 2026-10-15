@@ -51,9 +51,10 @@ struct WeatherView: View {
                     DailyForecastList(
                         items: weather.daily,
                         temperatureUnit: preferences.preferences.temperatureUnit,
-                        timeZone: TimeZone(identifier: weather.timezone) ?? .gmt
+                        timeZone: TimeZone(identifier: weather.timezone) ?? .gmt,
+                        note: weather.dailySummaryNote
                     )
-                    Link("Погода: Open-Meteo", destination: URL(string: "https://open-meteo.com/")!)
+                    Link("Погода: MET Norway · CC BY 4.0", destination: URL(string: "https://api.met.no/doc/License")!)
                         .font(.footnote)
                 }
                 .padding(.vertical)

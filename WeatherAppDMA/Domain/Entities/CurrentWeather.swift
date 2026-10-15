@@ -1,8 +1,8 @@
 import Foundation
 
-struct CurrentWeather: Equatable, Sendable {
+nonisolated struct CurrentWeather: Equatable, Sendable {
     let temperatureC: Double
-    let feelsLikeC: Double
+    let feelsLikeC: Double?
     let humidityPercent: Int
     let windMS: Double
     let condition: WeatherCondition

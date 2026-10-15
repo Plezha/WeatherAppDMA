@@ -1,6 +1,6 @@
 import Foundation
 
-struct DailyForecast: Identifiable, Equatable, Sendable {
+nonisolated struct DailyForecast: Identifiable, Equatable, Sendable {
     let date: Date
     let minC: Double
     let maxC: Double

@@ -1,6 +1,6 @@
 import Foundation
 
-struct CitySummary: Identifiable, Equatable, Sendable {
+nonisolated struct CitySummary: Identifiable, Equatable, Sendable {
     let name: String
     let currentTemperatureC: Double
     let condition: WeatherCondition

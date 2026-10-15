@@ -7,7 +7,8 @@ extension WeatherDTO {
             current: current.toDomain(),
             hourly: hourly.map { $0.toDomain() },
             daily: daily.map { $0.toDomain() },
-            timezone: timezone
+            timezone: timezone,
+            dailySummaryNote: dailySummaryNote
         )
     }
 }
