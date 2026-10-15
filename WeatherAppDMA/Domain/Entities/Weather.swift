@@ -5,4 +5,5 @@ struct Weather: Equatable, Sendable {
     let current: CurrentWeather
     let hourly: [HourlyForecast]
     let daily: [DailyForecast]
+    var timezone: String = "GMT"
 }

@@ -6,6 +6,9 @@ enum AppError: LocalizedError, Equatable {
     case resourceNotFound(String)
     case decodingFailed(String)
     case notImplemented
+    case networkUnavailable
+    case httpStatus(Int)
+    case invalidResponse
     case favoriteAlreadyExists(String)
     case favoriteNotFound
     case persistenceFailed(String)
@@ -23,6 +26,12 @@ enum AppError: LocalizedError, Equatable {
             return "Не удалось декодировать данные о погоде: \(details)"
         case .notImplemented:
             return "Этот источник данных ещё не реализован."
+        case .networkUnavailable:
+            return "Не удалось подключиться к сервису погоды. Проверьте интернет и попробуйте снова."
+        case .httpStatus(let status):
+            return "Сервис погоды вернул ошибку \(status). Попробуйте позже."
+        case .invalidResponse:
+            return "Сервис погоды вернул некорректные данные. Попробуйте позже."
         case .favoriteAlreadyExists(let city):
             return "«\(city)» уже в избранном."
         case .favoriteNotFound:

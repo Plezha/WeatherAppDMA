@@ -38,14 +38,20 @@ final class CitiesViewModel: ObservableObject {
     }
 
     func load() async {
-        state = .loading
+        // Keep the refreshable List mounted while its network request is running.
+        switch state {
+        case .loaded: break
+        default: state = .loading
+        }
         do {
             async let citiesTask = getCities.execute()
             async let favoritesTask = getFavorites.execute()
             let (cities, favs) = try await (citiesTask, favoritesTask)
+            try Task.checkCancellation()
             favorites = favs
             state = .loaded(cities)
         } catch {
+            guard !Task.isCancelled, !(error is CancellationError) else { return }
             let message = (error as? LocalizedError)?.errorDescription ?? "Что-то пошло не так."
             state = .error(message: message)
         }

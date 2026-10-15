@@ -45,12 +45,16 @@ struct WeatherView: View {
                     )
                     HourlyForecastStrip(
                         items: weather.hourly,
-                        temperatureUnit: preferences.preferences.temperatureUnit
+                        temperatureUnit: preferences.preferences.temperatureUnit,
+                        timeZone: TimeZone(identifier: weather.timezone) ?? .gmt
                     )
                     DailyForecastList(
                         items: weather.daily,
-                        temperatureUnit: preferences.preferences.temperatureUnit
+                        temperatureUnit: preferences.preferences.temperatureUnit,
+                        timeZone: TimeZone(identifier: weather.timezone) ?? .gmt
                     )
+                    Link("Погода: Open-Meteo", destination: URL(string: "https://open-meteo.com/")!)
+                        .font(.footnote)
                 }
                 .padding(.vertical)
             }
@@ -63,11 +67,13 @@ struct WeatherView: View {
             )
 
         case .error(let message):
-            ContentUnavailableView(
-                "Что-то пошло не так",
-                systemImage: "exclamationmark.triangle",
-                description: Text(message)
-            )
+            ContentUnavailableView {
+                Label("Что-то пошло не так", systemImage: "exclamationmark.triangle")
+            } description: {
+                Text(message)
+            } actions: {
+                Button("Повторить") { Task { await vm.loadInitial() } }
+            }
         }
     }
 }

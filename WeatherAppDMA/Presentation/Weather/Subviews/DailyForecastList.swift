@@ -3,6 +3,7 @@ import SwiftUI
 struct DailyForecastList: View {
     let items: [DailyForecast]
     let temperatureUnit: TemperatureUnit
+    var timeZone: TimeZone = .current
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -13,7 +14,9 @@ struct DailyForecastList: View {
             VStack(spacing: 0) {
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                     HStack {
-                        Text(Self.dayFormatter.string(from: item.date))
+                        Text(item.date, format: Date.FormatStyle(
+                            locale: Locale(identifier: "ru_RU"), timeZone: timeZone
+                        ).weekday(.abbreviated).day().month(.abbreviated))
                             .frame(width: 120, alignment: .leading)
                         Spacer()
                         Image(systemName: item.condition.sfSymbol)
@@ -38,10 +41,4 @@ struct DailyForecastList: View {
         }
     }
 
-    private static let dayFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "ru_RU")
-        f.setLocalizedDateFormatFromTemplate("EEE, d MMM")
-        return f
-    }()
 }

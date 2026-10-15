@@ -84,14 +84,21 @@ struct CitiesView: View {
                 }
                 .listStyle(.plain)
                 .refreshable { await vm.load() }
+                .safeAreaInset(edge: .bottom) {
+                    Link("Погода: Open-Meteo", destination: URL(string: "https://open-meteo.com/")!)
+                        .font(.footnote)
+                        .padding(.vertical, 8)
+                }
             }
 
         case .error(let message):
-            ContentUnavailableView(
-                "Не удалось загрузить города",
-                systemImage: "exclamationmark.triangle",
-                description: Text(message)
-            )
+            ContentUnavailableView {
+                Label("Не удалось загрузить города", systemImage: "exclamationmark.triangle")
+            } description: {
+                Text(message)
+            } actions: {
+                Button("Повторить") { Task { await vm.load() } }
+            }
         }
     }
 }

@@ -3,8 +3,7 @@ import SwiftData
 
 @MainActor
 enum CompositionRoot {
-    private static let loader = BundleJSONLoader()
-    private static let dataSource: WeatherDataSource = LocalWeatherDataSource(loader: loader)
+    private static let dataSource: WeatherDataSource = RemoteWeatherDataSource()
     private static let repository: WeatherRepository = DefaultWeatherRepository(dataSource: dataSource)
 
     static let modelContainer: ModelContainer = ModelContainerFactory.make()

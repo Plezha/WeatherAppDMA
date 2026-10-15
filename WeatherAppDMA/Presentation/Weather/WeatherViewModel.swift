@@ -36,29 +36,37 @@ final class WeatherViewModel: ObservableObject {
     private func fetch(city: String) async {
         currentTask?.cancel()
         let task = Task { [getWeather, updatePreferences] in
+            guard !Task.isCancelled else { return }
             let trimmed = city.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty else {
-                await MainActor.run { self.state = .idle }
+                self.state = .idle
                 return
             }
-            await MainActor.run { self.state = .loading }
+            self.state = .loading
             do {
                 let weather = try await getWeather.execute(city: trimmed)
-                if Task.isCancelled { return }
-                await MainActor.run {
-                    self.state = .loaded(weather)
-                    updatePreferences?.setLastOpenedCity(weather.city)
-                }
-            } catch AppError.cityNotFound(let city) {
-                await MainActor.run { self.state = .notFound(city: city) }
-            } catch AppError.emptyQuery {
-                await MainActor.run { self.state = .idle }
+                try Task.checkCancellation()
+                self.state = .loaded(weather)
+                updatePreferences?.setLastOpenedCity(weather.city)
             } catch {
-                let message = (error as? LocalizedError)?.errorDescription ?? "Что-то пошло не так."
-                await MainActor.run { self.state = .error(message: message) }
+                guard !Task.isCancelled, !(error is CancellationError) else { return }
+                switch error {
+                case AppError.cityNotFound(let city):
+                    self.state = .notFound(city: city)
+                case AppError.emptyQuery:
+                    self.state = .idle
+                default:
+                    let message = (error as? LocalizedError)?.errorDescription ?? "Что-то пошло не так."
+                    self.state = .error(message: message)
+                }
             }
         }
         currentTask = task
-        await task.value
+        // Task {} is unstructured: forward cancellation from SwiftUI's .task.
+        await withTaskCancellationHandler {
+            await task.value
+        } onCancel: {
+            task.cancel()
+        }
     }
 }

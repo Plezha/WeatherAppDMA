@@ -3,6 +3,7 @@ import SwiftUI
 struct HourlyForecastStrip: View {
     let items: [HourlyForecast]
     let temperatureUnit: TemperatureUnit
+    var timeZone: TimeZone = .current
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -14,7 +15,9 @@ struct HourlyForecastStrip: View {
                 LazyHStack(spacing: 12) {
                     ForEach(items) { item in
                         VStack(spacing: 6) {
-                            Text(Self.hourFormatter.string(from: item.date))
+                            Text(item.date, format: Date.FormatStyle(
+                                locale: Locale(identifier: "ru_RU"), timeZone: timeZone
+                            ).hour(.twoDigits(amPM: .omitted)))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             Image(systemName: item.condition.sfSymbol)
@@ -34,10 +37,4 @@ struct HourlyForecastStrip: View {
         }
     }
 
-    private static let hourFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "ru_RU")
-        f.dateFormat = "HH"
-        return f
-    }()
 }
