@@ -17,6 +17,8 @@ extension HTTPClient {
         }
         try Task.checkCancellation()
         guard let http = response as? HTTPURLResponse else { throw AppError.invalidResponse }
+        if http.statusCode == 401 { throw AppError.invalidAPIKey }
+        if http.statusCode == 429 { throw AppError.rateLimited }
         guard (200..<300).contains(http.statusCode) else { throw AppError.httpStatus(http.statusCode) }
         do {
             let decoder = JSONDecoder()

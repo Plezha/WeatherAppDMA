@@ -56,8 +56,7 @@ enum CompositionRoot {
     static func makeSettingsView() -> SettingsView {
         let viewModel = SettingsViewModel(
             store: preferencesStore,
-            removeFavoritesUseCase: DefaultRemoveFavoriteUseCase(repository: favoritesRepository),
-            sendTestMessageUseCase: DefaultSendTestMessageUseCase(repository: RemoteTestMessageRepository())
+            removeFavoritesUseCase: DefaultRemoveFavoriteUseCase(repository: favoritesRepository)
         )
         return SettingsView(vm: viewModel)
     }

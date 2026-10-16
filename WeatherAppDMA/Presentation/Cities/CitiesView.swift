@@ -85,7 +85,7 @@ struct CitiesView: View {
                 .listStyle(.plain)
                 .refreshable { await vm.load() }
                 .safeAreaInset(edge: .bottom) {
-                    Link("Погода: MET Norway · CC BY 4.0", destination: URL(string: "https://api.met.no/doc/License")!)
+                    Link("Погода: Visual Crossing", destination: URL(string: "https://www.visualcrossing.com/weather-api/")!)
                         .font(.footnote)
                         .padding(.vertical, 8)
                 }

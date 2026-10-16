@@ -9,6 +9,9 @@ enum AppError: LocalizedError, Equatable {
     case networkUnavailable
     case httpStatus(Int)
     case invalidResponse
+    case missingAPIKey
+    case invalidAPIKey
+    case rateLimited
     case favoriteAlreadyExists(String)
     case favoriteNotFound
     case persistenceFailed(String)
@@ -32,6 +35,12 @@ enum AppError: LocalizedError, Equatable {
             return "Сервер вернул ошибку \(status). Попробуйте позже."
         case .invalidResponse:
             return "Сервер вернул некорректные данные. Попробуйте позже."
+        case .missingAPIKey:
+            return "Не настроен API-ключ Visual Crossing. Добавьте его в локальную конфигурацию приложения."
+        case .invalidAPIKey:
+            return "Visual Crossing отклонил API-ключ. Проверьте ключ в локальной конфигурации."
+        case .rateLimited:
+            return "Достигнут лимит запросов Visual Crossing. Попробуйте позже."
         case .favoriteAlreadyExists(let city):
             return "«\(city)» уже в избранном."
         case .favoriteNotFound:

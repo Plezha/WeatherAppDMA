@@ -17,7 +17,6 @@ nonisolated struct WeatherDTO: Sendable {
     let current: CurrentWeatherDTO
     let hourly: [HourlyDTO]
     let daily: [DailyDTO]
-    var dailySummaryNote: String? = nil
 }
 
 nonisolated struct CurrentWeatherDTO: Sendable {

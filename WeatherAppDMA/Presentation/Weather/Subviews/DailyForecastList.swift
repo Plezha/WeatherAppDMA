@@ -4,7 +4,6 @@ struct DailyForecastList: View {
     let items: [DailyForecast]
     let temperatureUnit: TemperatureUnit
     var timeZone: TimeZone = .current
-    var note: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -39,12 +38,6 @@ struct DailyForecastList: View {
             }
             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
             .padding(.horizontal)
-            if let note {
-                Text(note)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal)
-            }
         }
     }
 

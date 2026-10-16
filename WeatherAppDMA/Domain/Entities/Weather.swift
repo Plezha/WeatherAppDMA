@@ -6,5 +6,4 @@ nonisolated struct Weather: Equatable, Sendable {
     let hourly: [HourlyForecast]
     let daily: [DailyForecast]
     var timezone: String = "GMT"
-    var dailySummaryNote: String? = nil
 }
