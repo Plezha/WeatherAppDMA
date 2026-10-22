@@ -22,6 +22,7 @@ struct SettingsView: View {
                             Text(unit.displayName).tag(unit)
                         }
                     }
+                    .accessibilityIdentifier("settings.temperatureUnit")
 
                     Picker("Ветер", selection: Binding(
                         get: { store.preferences.windUnit },
@@ -58,6 +59,7 @@ struct SettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Готово") { dismiss() }
+                        .accessibilityIdentifier("settings.done")
                 }
             }
             .confirmationDialog(

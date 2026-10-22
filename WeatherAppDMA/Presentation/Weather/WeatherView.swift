@@ -71,8 +71,10 @@ struct WeatherView: View {
                 Label("Что-то пошло не так", systemImage: "exclamationmark.triangle")
             } description: {
                 Text(message)
+                    .accessibilityIdentifier("weather.error")
             } actions: {
                 Button("Повторить") { Task { await vm.loadInitial() } }
+                    .accessibilityIdentifier("weather.retry")
             }
         }
     }

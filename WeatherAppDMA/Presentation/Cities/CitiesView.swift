@@ -36,6 +36,8 @@ struct CitiesView: View {
                         } label: {
                             Image(systemName: "star")
                         }
+                        .accessibilityLabel("Избранное")
+                        .accessibilityIdentifier("cities.favorites")
                     }
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
@@ -43,6 +45,8 @@ struct CitiesView: View {
                         } label: {
                             Image(systemName: "gearshape")
                         }
+                        .accessibilityLabel("Настройки")
+                        .accessibilityIdentifier("cities.settings")
                     }
                 }
                 .sheet(isPresented: $isSettingsPresented) {
@@ -81,6 +85,7 @@ struct CitiesView: View {
                             }
                         )
                     }
+                    .accessibilityIdentifier("city.row.\(city.name)")
                 }
                 .listStyle(.plain)
                 .refreshable { await vm.load() }
@@ -96,8 +101,10 @@ struct CitiesView: View {
                 Label("Не удалось загрузить города", systemImage: "exclamationmark.triangle")
             } description: {
                 Text(message)
+                    .accessibilityIdentifier("cities.error")
             } actions: {
                 Button("Повторить") { Task { await vm.load() } }
+                    .accessibilityIdentifier("cities.retry")
             }
         }
     }
@@ -131,6 +138,9 @@ private struct CityRow: View {
                     .foregroundStyle(isFavorite ? .yellow : .secondary)
             }
             .buttonStyle(.borderless)
+            .accessibilityLabel(isFavorite ? "Удалить из избранного" : "Добавить в избранное")
+            .accessibilityValue(isFavorite ? "В избранном" : "Не в избранном")
+            .accessibilityIdentifier("favorite.toggle.\(city.name)")
         }
         .padding(.vertical, 4)
     }
