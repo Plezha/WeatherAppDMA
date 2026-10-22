@@ -75,10 +75,49 @@ GET выполняется при открытии конкретного гор
 Документация: [Timeline GET](https://www.visualcrossing.com/resources/documentation/weather-api/timeline-weather-api/),
 [POST и несколько городов](https://www.visualcrossing.com/resources/documentation/weather-api/using-the-timeline-weather-api-with-multiple-locations-in-the-same-request/).
 
-## Запуск
+## Запуск и тесты
 
 Откройте `WeatherAppDMA.xcodeproj` и запустите схему `WeatherAppDMA`.
 В исходной конфигурации указан deployment target iOS 26.5 — нужен совместимый
 симулятор. Для локальной проверки на iOS 26.3/26.4 временно снизьте deployment
 target приложения и тестов до 26.0 в локальной копии проекта. Одного параметра
 командной строки может быть недостаточно для выбора destination в Xcode.
+
+Новые проверки поведения приложения:
+
+- `ApplicationBehaviorTests` — поиск без учёта регистра/пробелов и восстановление
+  сохранённого порядка избранного после ошибки перестановки (2 unit-теста).
+- `ApplicationFlowsUITests` (2 UI-теста):
+  - Успешные POST списка городов и GET прогноза, сопоставление городов в
+    переставленном ответе и сохранение °F после перезапуска (12,5 °C → 54,5 °F).
+  - Ошибка HTTP 503 для POST и тайм-аут GET, восстановление после «Повторить»,
+    затем добавление избранного, сохранение заметки и удаление города.
+
+```sh
+xcodebuild test -project WeatherAppDMA.xcodeproj -scheme WeatherAppDMA \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest' \
+  -only-testing:WeatherAppDMATests/ApplicationBehaviorTests \
+  -only-testing:WeatherAppDMAUITests/ApplicationFlowsUITests \
+  -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO
+```
+
+UI-тесты запускают Debug-сборку с `--ui-testing`. Используется настоящий
+`RemoteWeatherDataSource`: он строит GET/POST-запросы, проверяет HTTP-статусы,
+декодирует API JSON и преобразует его в модели приложения. Только транспорт
+заменён на `UITestHTTPClient`, возвращающий фиксированные ответы без URLSession
+и внешних запросов. Неизвестные URL и HTTP-методы отклоняются. Время источника
+зафиксировано, чтобы почасовой прогноз не устаревал между запусками.
+
+Сценарий задаётся через `UI_TEST_NETWORK_SCENARIO`: `success` сразу возвращает
+JSON с HTTP 200, а `retry` сначала возвращает 503 для POST и бросает
+`URLError.timedOut` для GET, затем отвечает успешно на повторные запросы.
+Каждый запуск приложения создаёт новый транспорт со своим состоянием.
+
+SwiftData хранится в памяти, а UserDefaults использует отдельный suite с
+уникальным `UI_TEST_RUN_ID`. Этот ID сохраняется при перезапуске внутри одного
+теста. Используется фиктивный ключ `ui-test-key`; настоящий ключ и интернет
+не нужны, данные обычного запуска не меняются. В Release тестовый транспорт
+не компилируется и аргумент тестового режима игнорируется.
+
+Существовавшие ранее unit-тесты ViewModel, избранного и настроек сохранены.
+Этот PR добавляет только два unit-теста и два UI-теста, описанные выше.

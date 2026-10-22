@@ -52,12 +52,14 @@ struct FavoritesView: View {
                     } label: {
                         FavoriteRow(favorite: favorite)
                     }
+                    .accessibilityIdentifier("favorite.row.\(favorite.cityName)")
                     .swipeActions(edge: .trailing) {
                         Button(role: .destructive) {
                             Task { await vm.delete(id: favorite.id) }
                         } label: {
                             Label("Удалить", systemImage: "trash")
                         }
+                        .accessibilityIdentifier("favorite.delete.\(favorite.cityName)")
                     }
                     .swipeActions(edge: .leading) {
                         Button {
@@ -66,6 +68,7 @@ struct FavoritesView: View {
                             Label("Заметка", systemImage: "square.and.pencil")
                         }
                         .tint(.blue)
+                        .accessibilityIdentifier("favorite.editNote.\(favorite.cityName)")
                     }
                 }
                 .onMove { source, destination in
@@ -125,6 +128,7 @@ private struct EditNoteSheet: View {
                 Section(favorite.cityName) {
                     TextField("Заметка", text: $noteText, axis: .vertical)
                         .lineLimit(3...6)
+                        .accessibilityIdentifier("favorite.noteText")
                 }
             }
             .navigationTitle("Заметка")
@@ -138,6 +142,7 @@ private struct EditNoteSheet: View {
                         let trimmed = noteText.trimmingCharacters(in: .whitespacesAndNewlines)
                         onSave(trimmed.isEmpty ? nil : trimmed)
                     }
+                    .accessibilityIdentifier("favorite.saveNote")
                 }
             }
         }
