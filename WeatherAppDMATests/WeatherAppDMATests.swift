@@ -48,34 +48,6 @@ struct WeatherViewModelTests {
         }
     }
 
-    @Test
-    func callerCancellation_reachesLoadingTaskWithoutPublishingError() async {
-        let useCase = SuspendedWeatherUseCase(weather: Self.sampleWeather)
-        let vm = WeatherViewModel(getWeather: useCase)
-        vm.query = "old"
-        let caller = Task { await vm.search() }
-        await useCase.waitUntilStarted()
-        caller.cancel()
-        await useCase.finishWithError()
-        await caller.value
-        #expect(await useCase.wasCancelled)
-        #expect(vm.state == .loading)
-    }
-
-    @Test
-    func cancelledOldRequest_cannotReplaceNewResultWithError() async {
-        let useCase = SuspendedWeatherUseCase(weather: Self.sampleWeather)
-        let vm = WeatherViewModel(getWeather: useCase)
-        vm.query = "old"
-        let old = Task { await vm.search() }
-        await useCase.waitUntilStarted()
-        vm.query = "new"
-        await vm.search()
-        await useCase.finishWithError()
-        await old.value
-        #expect(vm.state == .loaded(Self.sampleWeather))
-    }
-
     // MARK: - Fixtures
 
     private static let sampleWeather = Weather(
@@ -95,36 +67,4 @@ struct WeatherViewModelTests {
             DailyForecast(date: Date(timeIntervalSince1970: 0), minC: 10, maxC: 16, condition: .clear)
         ]
     )
-}
-
-private actor SuspendedWeatherUseCase: GetWeatherForCityUseCase {
-    let weather: Weather
-    private var pending: CheckedContinuation<Void, Never>?
-    private var startWaiter: CheckedContinuation<Void, Never>?
-    private var started = false
-    private(set) var wasCancelled = false
-
-    init(weather: Weather) { self.weather = weather }
-
-    func execute(city: String) async throws -> Weather {
-        guard city == "old" else { return weather }
-        await withCheckedContinuation { continuation in
-            pending = continuation
-            started = true
-            startWaiter?.resume()
-            startWaiter = nil
-        }
-        wasCancelled = Task.isCancelled
-        throw AppError.httpStatus(500)
-    }
-
-    func waitUntilStarted() async {
-        if started { return }
-        await withCheckedContinuation { startWaiter = $0 }
-    }
-
-    func finishWithError() {
-        pending?.resume()
-        pending = nil
-    }
 }

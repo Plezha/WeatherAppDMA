@@ -75,18 +75,10 @@ GET выполняется при открытии конкретного гор
 Документация: [Timeline GET](https://www.visualcrossing.com/resources/documentation/weather-api/timeline-weather-api/),
 [POST и несколько городов](https://www.visualcrossing.com/resources/documentation/weather-api/using-the-timeline-weather-api-with-multiple-locations-in-the-same-request/).
 
-## Запуск и тесты
+## Запуск
 
 Откройте `WeatherAppDMA.xcodeproj` и запустите схему `WeatherAppDMA`.
-В исходной конфигурации указан deployment target iOS 26.5. Для проверки на более
-раннем iOS 26 simulator можно переопределить его без изменения файла проекта:
-
-```sh
-xcodebuild test -project WeatherAppDMA.xcodeproj -scheme WeatherAppDMA \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest' \
-  -only-testing:WeatherAppDMATests IPHONEOS_DEPLOYMENT_TARGET=26.0 CODE_SIGNING_ALLOWED=NO
-```
-
-Unit-тесты подставляют `HTTPClient` и тестовый ключ. Они проверяют оба метода,
-кодирование формы, разбор ответа, единицы/даты, перестановку и дубли batch-ответов,
-ошибки сети/HTTP/JSON, отмену и сохранённый локальный источник.
+В исходной конфигурации указан deployment target iOS 26.5 — нужен совместимый
+симулятор. Для локальной проверки на iOS 26.3/26.4 временно снизьте deployment
+target приложения и тестов до 26.0 в локальной копии проекта. Одного параметра
+командной строки может быть недостаточно для выбора destination в Xcode.
