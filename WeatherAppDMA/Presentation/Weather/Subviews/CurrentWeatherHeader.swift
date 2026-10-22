@@ -21,10 +21,12 @@ struct CurrentWeatherHeader: View {
             HStack(alignment: .top, spacing: 2) {
                 Text(Self.temperatureFormatter.string(from: NSNumber(value: displayValue)) ?? "—")
                     .font(.system(size: 64, weight: .thin, design: .rounded))
+                    .accessibilityIdentifier("weather.temperature")
                 Text(temperatureUnit.displayName)
                     .font(.system(size: 32, weight: .light, design: .rounded))
                     .foregroundStyle(.secondary)
                     .padding(.top, 8)
+                    .accessibilityIdentifier("weather.temperatureUnit")
             }
 
             Text(weather.description)
