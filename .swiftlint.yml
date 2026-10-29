@@ -1,8 +1,11 @@
-# Default rules plus additional safety and collection checks.
+# Project rules; nested test configs relax only identifier length.
 included:
   - WeatherAppDMA
   - WeatherAppDMATests
   - WeatherAppDMAUITests
+
+disabled_rules:
+  - line_length
 
 opt_in_rules:
   - unhandled_throwing_task

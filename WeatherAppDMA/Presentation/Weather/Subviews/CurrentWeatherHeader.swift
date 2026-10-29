@@ -38,11 +38,11 @@ struct CurrentWeatherHeader: View {
     }
 
     private static let temperatureFormatter: NumberFormatter = {
-        let f = NumberFormatter()
-        f.locale = Locale(identifier: "ru_RU")
-        f.numberStyle = .decimal
-        f.maximumFractionDigits = 1
-        f.minimumFractionDigits = 0
-        return f
+        let formatter = NumberFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 1
+        formatter.minimumFractionDigits = 0
+        return formatter
     }()
 }

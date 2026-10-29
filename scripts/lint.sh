@@ -38,5 +38,5 @@ if [[ "$("$swiftlint_bin" version)" != "$swiftlint_version" ]]; then
 fi
 
 cd "$project_dir"
-exec "$swiftlint_bin" lint --config "$project_dir/.swiftlint.yml" \
-    --cache-path "$tool_root/cache" "$@"
+# Discover the root config so per-directory test configs are also applied.
+exec "$swiftlint_bin" lint --cache-path "$tool_root/cache" "$@"
