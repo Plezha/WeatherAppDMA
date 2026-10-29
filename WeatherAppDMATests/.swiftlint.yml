@@ -1,0 +1,5 @@
+# Test identifiers may have any length; naming style and other rules still apply.
+identifier_name:
+  min_length: 1
+  # SwiftLint requires a numeric upper bound; Int.max removes the length cap.
+  max_length: 9223372036854775807

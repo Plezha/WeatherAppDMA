@@ -1,13 +1,13 @@
 import SwiftUI
 
 struct FavoritesView: View {
-    @StateObject private var vm: FavoritesViewModel
+    @StateObject private var viewModel: FavoritesViewModel
     private let makeWeatherView: (String) -> WeatherView
 
     @State private var editingFavorite: FavoriteCity?
 
-    init(vm: FavoritesViewModel, makeWeatherView: @escaping (String) -> WeatherView) {
-        _vm = StateObject(wrappedValue: vm)
+    init(viewModel: FavoritesViewModel, makeWeatherView: @escaping (String) -> WeatherView) {
+        _viewModel = StateObject(wrappedValue: viewModel)
         self.makeWeatherView = makeWeatherView
     }
 
@@ -15,15 +15,15 @@ struct FavoritesView: View {
         content
             .navigationTitle("Избранное")
             .toolbar {
-                if case .loaded = vm.state {
+                if case .loaded = viewModel.state {
                     EditButton()
                 }
             }
-            .task { await vm.load() }
+            .task { await viewModel.load() }
             .sheet(item: $editingFavorite) { favorite in
                 EditNoteSheet(favorite: favorite) { newNote in
                     editingFavorite = nil
-                    Task { await vm.updateNote(id: favorite.id, note: newNote) }
+                    Task { await viewModel.updateNote(id: favorite.id, note: newNote) }
                 } onCancel: {
                     editingFavorite = nil
                 }
@@ -32,7 +32,7 @@ struct FavoritesView: View {
 
     @ViewBuilder
     private var content: some View {
-        switch vm.state {
+        switch viewModel.state {
         case .loading:
             ProgressView().controlSize(.large)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -55,7 +55,7 @@ struct FavoritesView: View {
                     .accessibilityIdentifier("favorite.row.\(favorite.cityName)")
                     .swipeActions(edge: .trailing) {
                         Button(role: .destructive) {
-                            Task { await vm.delete(id: favorite.id) }
+                            Task { await viewModel.delete(id: favorite.id) }
                         } label: {
                             Label("Удалить", systemImage: "trash")
                         }
@@ -72,7 +72,7 @@ struct FavoritesView: View {
                     }
                 }
                 .onMove { source, destination in
-                    Task { await vm.move(from: source, to: destination) }
+                    Task { await viewModel.move(from: source, to: destination) }
                 }
             }
             .listStyle(.plain)

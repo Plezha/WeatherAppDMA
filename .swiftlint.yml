@@ -1,0 +1,18 @@
+# Project rules; nested test configs relax only identifier length.
+included:
+  - WeatherAppDMA
+  - WeatherAppDMATests
+  - WeatherAppDMAUITests
+
+disabled_rules:
+  - line_length
+
+opt_in_rules:
+  - unhandled_throwing_task
+  - force_unwrapping
+  - empty_count
+  - contains_over_filter_count
+
+allow_zero_lintable_files: false
+check_for_updates: false
+reporter: xcode

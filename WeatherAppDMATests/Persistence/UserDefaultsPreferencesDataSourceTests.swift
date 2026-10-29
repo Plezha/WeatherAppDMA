@@ -4,15 +4,15 @@ import Foundation
 
 struct UserDefaultsPreferencesDataSourceTests {
 
-    private func makeDataSource() -> (UserDefaultsPreferencesDataSource, UserDefaults) {
+    private func makeDataSource() throws -> (UserDefaultsPreferencesDataSource, UserDefaults) {
         let suiteName = "test.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suiteName)!
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
         return (UserDefaultsPreferencesDataSource(defaults: defaults), defaults)
     }
 
     @Test
-    func load_returnsDefaults_whenEmpty() {
-        let (ds, _) = makeDataSource()
+    func load_returnsDefaults_whenEmpty() throws {
+        let (ds, _) = try makeDataSource()
         let prefs = ds.load()
         #expect(prefs.temperatureUnit == .celsius)
         #expect(prefs.windUnit == .metersPerSecond)
@@ -20,22 +20,22 @@ struct UserDefaultsPreferencesDataSourceTests {
     }
 
     @Test
-    func setTemperatureUnit_persists() {
-        let (ds, _) = makeDataSource()
+    func setTemperatureUnit_persists() throws {
+        let (ds, _) = try makeDataSource()
         ds.setTemperatureUnit(.fahrenheit)
         #expect(ds.load().temperatureUnit == .fahrenheit)
     }
 
     @Test
-    func setWindUnit_persists() {
-        let (ds, _) = makeDataSource()
+    func setWindUnit_persists() throws {
+        let (ds, _) = try makeDataSource()
         ds.setWindUnit(.kilometersPerHour)
         #expect(ds.load().windUnit == .kilometersPerHour)
     }
 
     @Test
-    func setLastOpenedCity_roundTrip() {
-        let (ds, _) = makeDataSource()
+    func setLastOpenedCity_roundTrip() throws {
+        let (ds, _) = try makeDataSource()
         ds.setLastOpenedCity("Москва")
         #expect(ds.load().lastOpenedCity == "Москва")
         ds.setLastOpenedCity(nil)
@@ -43,8 +43,8 @@ struct UserDefaultsPreferencesDataSourceTests {
     }
 
     @Test
-    func save_writesWholePreferences() {
-        let (ds, _) = makeDataSource()
+    func save_writesWholePreferences() throws {
+        let (ds, _) = try makeDataSource()
         let prefs = UserPreferences(
             temperatureUnit: .fahrenheit,
             windUnit: .kilometersPerHour,
@@ -56,8 +56,8 @@ struct UserDefaultsPreferencesDataSourceTests {
     }
 
     @Test
-    func reset_restoresDefaults() {
-        let (ds, _) = makeDataSource()
+    func reset_restoresDefaults() throws {
+        let (ds, _) = try makeDataSource()
         ds.save(UserPreferences(temperatureUnit: .fahrenheit, windUnit: .kilometersPerHour, lastOpenedCity: "X"))
         ds.reset()
         let loaded = ds.load()

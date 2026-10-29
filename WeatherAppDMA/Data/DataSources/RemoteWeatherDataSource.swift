@@ -48,7 +48,7 @@ nonisolated struct RemoteWeatherDataSource: WeatherDataSource {
         }
         let values = parameters + [("key", key), ("unitGroup", "metric"),
                                    ("contentType", "json"), ("iconSet", "icons2")]
-        let encoded = Self.formEncoded(values)
+        let encoded = try Self.formEncoded(values)
         var components = URLComponents()
         components.scheme = "https"
         components.host = "weather.visualcrossing.com"
@@ -65,10 +65,14 @@ nonisolated struct RemoteWeatherDataSource: WeatherDataSource {
         return request
     }
 
-    private static func formEncoded(_ parameters: [(String, String)]) -> String {
+    private static func formEncoded(_ parameters: [(String, String)]) throws -> String {
         let allowed = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~")
-        return parameters.map { name, value in
-            "\(name.addingPercentEncoding(withAllowedCharacters: allowed)!)=\(value.addingPercentEncoding(withAllowedCharacters: allowed)!)"
+        return try parameters.map { name, value in
+            guard let encodedName = name.addingPercentEncoding(withAllowedCharacters: allowed),
+                  let encodedValue = value.addingPercentEncoding(withAllowedCharacters: allowed) else {
+                throw AppError.invalidResponse
+            }
+            return "\(encodedName)=\(encodedValue)"
         }.joined(separator: "&")
     }
 

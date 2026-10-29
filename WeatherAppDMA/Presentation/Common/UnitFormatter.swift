@@ -11,8 +11,8 @@ enum UnitFormatter {
         return "\(Int(value.rounded()))\(unit.displayName)"
     }
 
-    static func wind(ms: Double, unit: WindUnit) -> String {
-        let value = unit.convert(fromMetersPerSecond: ms)
+    static func wind(metersPerSecond: Double, unit: WindUnit) -> String {
+        let value = unit.convert(fromMetersPerSecond: metersPerSecond)
         return String(format: "%.1f %@", value, unit.displayName)
     }
 }
