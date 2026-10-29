@@ -38,7 +38,9 @@ enum CompositionRoot {
     private static let preferencesDataSource: UserDefaultsPreferencesDataSource = {
         guard isUITesting else { return UserDefaultsPreferencesDataSource() }
         let runID = ProcessInfo.processInfo.environment["UI_TEST_RUN_ID"] ?? UUID().uuidString
-        let defaults = UserDefaults(suiteName: "WeatherAppDMA.UITests.\(runID)")!
+        guard let defaults = UserDefaults(suiteName: "WeatherAppDMA.UITests.\(runID)") else {
+            preconditionFailure("Unable to create isolated preferences for UI testing")
+        }
         return UserDefaultsPreferencesDataSource(defaults: defaults)
     }()
     private static let preferencesRepository: PreferencesRepository = DefaultPreferencesRepository(dataSource: preferencesDataSource)
@@ -56,7 +58,7 @@ enum CompositionRoot {
             removeFavorite: DefaultRemoveFavoriteUseCase(repository: favoritesRepository)
         )
         return CitiesView(
-            vm: viewModel,
+            viewModel: viewModel,
             makeWeatherView: makeWeatherView(for:),
             makeFavoritesView: makeFavoritesView,
             makeSettingsView: makeSettingsView
@@ -69,7 +71,7 @@ enum CompositionRoot {
             initialCity: city,
             updatePreferences: DefaultUpdatePreferencesUseCase(repository: preferencesRepository)
         )
-        return WeatherView(vm: viewModel)
+        return WeatherView(viewModel: viewModel)
     }
 
     static func makeFavoritesView() -> FavoritesView {
@@ -79,7 +81,7 @@ enum CompositionRoot {
             updateNoteUseCase: DefaultUpdateFavoriteNoteUseCase(repository: favoritesRepository),
             reorderUseCase: DefaultReorderFavoritesUseCase(repository: favoritesRepository)
         )
-        return FavoritesView(vm: viewModel, makeWeatherView: makeWeatherView(for:))
+        return FavoritesView(viewModel: viewModel, makeWeatherView: makeWeatherView(for:))
     }
 
     static func makeSettingsView() -> SettingsView {
@@ -87,6 +89,6 @@ enum CompositionRoot {
             store: preferencesStore,
             removeFavoritesUseCase: DefaultRemoveFavoriteUseCase(repository: favoritesRepository)
         )
-        return SettingsView(vm: viewModel)
+        return SettingsView(viewModel: viewModel)
     }
 }

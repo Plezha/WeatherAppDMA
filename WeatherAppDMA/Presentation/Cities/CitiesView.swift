@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CitiesView: View {
-    @StateObject private var vm: CitiesViewModel
+    @StateObject private var viewModel: CitiesViewModel
     private let makeWeatherView: (String) -> WeatherView
     private let makeFavoritesView: () -> FavoritesView
     private let makeSettingsView: () -> SettingsView
@@ -9,12 +9,12 @@ struct CitiesView: View {
     @State private var isSettingsPresented = false
 
     init(
-        vm: CitiesViewModel,
+        viewModel: CitiesViewModel,
         makeWeatherView: @escaping (String) -> WeatherView,
         makeFavoritesView: @escaping () -> FavoritesView,
         makeSettingsView: @escaping () -> SettingsView
     ) {
-        _vm = StateObject(wrappedValue: vm)
+        _viewModel = StateObject(wrappedValue: viewModel)
         self.makeWeatherView = makeWeatherView
         self.makeFavoritesView = makeFavoritesView
         self.makeSettingsView = makeSettingsView
@@ -25,7 +25,7 @@ struct CitiesView: View {
             content
                 .navigationTitle("Города")
                 .searchable(
-                    text: $vm.query,
+                    text: $viewModel.query,
                     placement: .navigationBarDrawer(displayMode: .always),
                     prompt: "Поиск города"
                 )
@@ -52,20 +52,20 @@ struct CitiesView: View {
                 .sheet(isPresented: $isSettingsPresented) {
                     makeSettingsView()
                 }
-                .task { await vm.load() }
+                .task { await viewModel.load() }
         }
     }
 
     @ViewBuilder
     private var content: some View {
-        switch vm.state {
+        switch viewModel.state {
         case .loading:
             ProgressView("Загрузка…")
                 .controlSize(.large)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
         case .loaded:
-            let cities = vm.filteredCities
+            let cities = viewModel.filteredCities
             if cities.isEmpty {
                 ContentUnavailableView(
                     "Ничего не найдено",
@@ -79,16 +79,16 @@ struct CitiesView: View {
                     } label: {
                         CityRow(
                             city: city,
-                            isFavorite: vm.isFavorite(city),
+                            isFavorite: viewModel.isFavorite(city),
                             onToggleFavorite: {
-                                Task { await vm.toggleFavorite(city) }
+                                Task { await viewModel.toggleFavorite(city) }
                             }
                         )
                     }
                     .accessibilityIdentifier("city.row.\(city.name)")
                 }
                 .listStyle(.plain)
-                .refreshable { await vm.load() }
+                .refreshable { await viewModel.load() }
                 .safeAreaInset(edge: .bottom) {
                     Link("Погода: Visual Crossing", destination: URL(string: "https://www.visualcrossing.com/weather-api/")!)
                         .font(.footnote)
@@ -103,7 +103,7 @@ struct CitiesView: View {
                 Text(message)
                     .accessibilityIdentifier("cities.error")
             } actions: {
-                Button("Повторить") { Task { await vm.load() } }
+                Button("Повторить") { Task { await viewModel.load() } }
                     .accessibilityIdentifier("cities.retry")
             }
         }

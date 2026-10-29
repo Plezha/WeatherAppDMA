@@ -22,7 +22,7 @@ struct MetricsRow: View {
             metric(
                 icon: "wind",
                 title: "Ветер",
-                value: UnitFormatter.wind(ms: current.windMS, unit: windUnit)
+                value: UnitFormatter.wind(metersPerSecond: current.windMS, unit: windUnit)
             )
         }
         .padding(.horizontal)

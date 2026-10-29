@@ -44,15 +44,21 @@ actor UITestHTTPClient: HTTPClient {
         if scenario == .retry, failedEndpoints.insert(endpoint).inserted {
             switch endpoint {
             case .cities:
-                return (Data(), HTTPURLResponse(url: url, statusCode: 503, httpVersion: nil, headerFields: nil)!)
+                return try makeResponse(url: url, statusCode: 503)
             case .forecast:
                 throw URLError(.timedOut)
             }
         }
 
         let json = endpoint == .cities ? Self.citiesJSON : Self.forecastJSON
-        let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil,
-                                       headerFields: ["Content-Type": "application/json"])!
+        return try makeResponse(url: url, statusCode: 200, json: json)
+    }
+
+    private func makeResponse(url: URL, statusCode: Int, json: String = "") throws -> (Data, URLResponse) {
+        guard let response = HTTPURLResponse(url: url, statusCode: statusCode, httpVersion: nil,
+                                            headerFields: ["Content-Type": "application/json"]) else {
+            throw URLError(.badServerResponse)
+        }
         return (Data(json.utf8), response)
     }
 

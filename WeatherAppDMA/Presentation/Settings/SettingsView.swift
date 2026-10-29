@@ -1,13 +1,13 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @StateObject private var vm: SettingsViewModel
+    @StateObject private var viewModel: SettingsViewModel
     @ObservedObject private var store: PreferencesStore
     @Environment(\.dismiss) private var dismiss
 
-    init(vm: SettingsViewModel) {
-        _vm = StateObject(wrappedValue: vm)
-        _store = ObservedObject(wrappedValue: vm.store)
+    init(viewModel: SettingsViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+        _store = ObservedObject(wrappedValue: viewModel.store)
     }
 
     var body: some View {
@@ -47,10 +47,10 @@ struct SettingsView: View {
 
                 Section("Данные") {
                     Button("Удалить всё избранное", role: .destructive) {
-                        vm.isConfirmingWipe = true
+                        viewModel.isConfirmingWipe = true
                     }
                     Button("Сбросить настройки", role: .destructive) {
-                        vm.resetPreferences()
+                        viewModel.resetPreferences()
                     }
                 }
             }
@@ -64,11 +64,11 @@ struct SettingsView: View {
             }
             .confirmationDialog(
                 "Удалить все избранные города?",
-                isPresented: $vm.isConfirmingWipe,
+                isPresented: $viewModel.isConfirmingWipe,
                 titleVisibility: .visible
             ) {
                 Button("Удалить", role: .destructive) {
-                    Task { await vm.wipeFavorites() }
+                    Task { await viewModel.wipeFavorites() }
                 }
                 Button("Отмена", role: .cancel) {}
             }

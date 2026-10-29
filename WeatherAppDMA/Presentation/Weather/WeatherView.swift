@@ -1,23 +1,23 @@
 import SwiftUI
 
 struct WeatherView: View {
-    @StateObject private var vm: WeatherViewModel
+    @StateObject private var viewModel: WeatherViewModel
     @EnvironmentObject private var preferences: PreferencesStore
 
-    init(vm: WeatherViewModel) {
-        _vm = StateObject(wrappedValue: vm)
+    init(viewModel: WeatherViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
     }
 
     var body: some View {
         content
-            .navigationTitle(vm.initialCity ?? "Погода")
+            .navigationTitle(viewModel.initialCity ?? "Погода")
             .navigationBarTitleDisplayMode(.inline)
-            .task { await vm.loadInitial() }
+            .task { await viewModel.loadInitial() }
     }
 
     @ViewBuilder
     private var content: some View {
-        switch vm.state {
+        switch viewModel.state {
         case .idle:
             ContentUnavailableView(
                 "Выберите город",
@@ -73,7 +73,7 @@ struct WeatherView: View {
                 Text(message)
                     .accessibilityIdentifier("weather.error")
             } actions: {
-                Button("Повторить") { Task { await vm.loadInitial() } }
+                Button("Повторить") { Task { await viewModel.loadInitial() } }
                     .accessibilityIdentifier("weather.retry")
             }
         }
